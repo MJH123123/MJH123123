@@ -209,6 +209,15 @@ test/mock-test.js         Mock Micro800 server and client tests
 examples/                 Importable example flow
 ```
 
+Quick Installation in windows machine with NODE-RED:
+copy the file into c drive and run the code below.
+
+```
+cd %USERPROFILE%\.node-red
+npm install C:\node-red-contrib-micro800-eip.tgz
+```
+
+
 See [CONTRIBUTING.md](CONTRIBUTING.md) for how to help.
 
 ## License
