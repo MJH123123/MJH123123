@@ -6,8 +6,6 @@ Read and write **Rockwell / Allen-Bradley Micro800** PLC variables (Micro820, Mi
 - **Built for Micro800.** No backplane or slot routing, which is what makes ControlLogix-oriented EtherNet/IP nodes fail against a Micro850.
 - **One variable editor.** Define all your tags once on the PLC config node, then pick them in the read and write nodes.
 
-> **Status:** verified against a simulated PLC (`npm test`). Hardware reports are welcome, so please open an issue with your model and firmware version, whether it works or not.
-
 > This project is not affiliated with or endorsed by Rockwell Automation. Allen-Bradley, Micro800 and CCW are trademarks of Rockwell Automation, Inc.
 
 ---
