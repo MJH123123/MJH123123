@@ -1,0 +1,126 @@
+<script type="text/javascript">
+  RED.nodes.registerType('micro800-config', {
+    category: 'config',
+    defaults: {
+      name: { value: '' },
+      host: { value: '', required: true },
+      port: { value: 44818, validate: RED.validators.number() },
+      timeout: { value: 5000, validate: RED.validators.number() },
+      reconnect: { value: 5000, validate: RED.validators.number() },
+      vars: { value: [] }
+    },
+    label: function () {
+      return this.name || (this.host ? 'Micro800 @ ' + this.host : 'Micro800 PLC');
+    },
+    oneditprepare: function () {
+      var node = this;
+      var tabs = RED.tabs.create({
+        id: 'micro800-tabs',
+        onchange: function (tab) {
+          $('#micro800-tabs-content').children().hide();
+          $('#' + tab.id).show();
+        }
+      });
+      tabs.addTab({ id: 'micro800-tab-conn', label: 'Connection' });
+      tabs.addTab({ id: 'micro800-tab-vars', label: 'Variables' });
+      tabs.activateTab('micro800-tab-conn');
+
+      var types = ['auto', 'BOOL', 'SINT', 'USINT', 'INT', 'UINT', 'DINT', 'UDINT', 'LINT', 'ULINT', 'REAL', 'LREAL', 'SSTRING', 'STRING'];
+      var list = $('#node-config-input-vars-container');
+      list.css('min-height', '200px').css('min-width', '420px').editableList({
+        addButton: 'add variable',
+        sortable: true,
+        removable: true,
+        addItem: function (row, index, data) {
+          data = data || {};
+          row.css({ overflow: 'hidden', whiteSpace: 'nowrap' });
+          var wrap = $('<div/>', { style: 'display:flex;gap:4px;align-items:center' }).appendTo(row);
+          $('<input/>', { type: 'text', class: 'var-name', placeholder: 'name', style: 'flex:1 1 26%;min-width:0' }).val(data.name || '').appendTo(wrap);
+          $('<input/>', { type: 'text', class: 'var-tag', placeholder: 'PLC tag e.g. Motor1_Speed or Arr[2]', style: 'flex:1 1 38%;min-width:0' }).val(data.tag || '').appendTo(wrap);
+          var sel = $('<select/>', { class: 'var-type', style: 'flex:0 0 90px;width:90px' }).appendTo(wrap);
+          types.forEach(function (t) { sel.append($('<option/>').val(t).text(t === 'auto' ? 'auto' : t)); });
+          sel.val(data.dataType || 'auto');
+          $('<input/>', { type: 'number', min: 1, class: 'var-count', title: 'Array elements to read (1 = single value)', style: 'flex:0 0 52px;width:52px' }).val(data.count || 1).appendTo(wrap);
+        }
+      });
+      (node.vars || []).forEach(function (v) { list.editableList('addItem', v); });
+      if (!(node.vars || []).length) list.editableList('addItem', {});
+    },
+    oneditsave: function () {
+      var vars = [];
+      var seen = {};
+      $('#node-config-input-vars-container').editableList('items').each(function () {
+        var row = $(this);
+        var name = $.trim(row.find('.var-name').val());
+        var tag = $.trim(row.find('.var-tag').val());
+        if (!name && !tag) return;
+        if (!name) name = tag;
+        if (!tag) tag = name;
+        if (seen[name]) return;
+        seen[name] = true;
+        vars.push({
+          name: name,
+          tag: tag,
+          dataType: row.find('.var-type').val(),
+          count: Math.max(1, parseInt(row.find('.var-count').val(), 10) || 1)
+        });
+      });
+      this.vars = vars;
+    },
+    oneditresize: function () {
+      var h = $('#micro800-tab-vars').height() - 50;
+      if (h > 120) $('#node-config-input-vars-container').editableList('height', h);
+    }
+  });
+</script>
+
+<script type="text/html" data-template-name="micro800-config">
+  <div class="form-row">
+    <label for="node-config-input-name"><i class="fa fa-tag"></i> Name</label>
+    <input type="text" id="node-config-input-name" placeholder="Name">
+  </div>
+  <div class="form-row micro800-tabs-row" style="min-width:420px">
+    <ul style="min-width:300px;margin-bottom:20px" id="micro800-tabs"></ul>
+  </div>
+  <div id="micro800-tabs-content" style="min-height:260px">
+    <div id="micro800-tab-conn" style="display:none">
+      <div class="form-row">
+        <label for="node-config-input-host"><i class="fa fa-globe"></i> IP / Host</label>
+        <input type="text" id="node-config-input-host" placeholder="192.168.1.10">
+      </div>
+      <div class="form-row">
+        <label for="node-config-input-port"><i class="fa fa-plug"></i> Port</label>
+        <input type="text" id="node-config-input-port" style="width:100px">
+      </div>
+      <div class="form-row">
+        <label for="node-config-input-timeout"><i class="fa fa-clock-o"></i> Timeout (ms)</label>
+        <input type="text" id="node-config-input-timeout" style="width:100px">
+      </div>
+      <div class="form-row">
+        <label for="node-config-input-reconnect"><i class="fa fa-refresh"></i> Retry (ms)</label>
+        <input type="text" id="node-config-input-reconnect" style="width:100px">
+      </div>
+    </div>
+    <div id="micro800-tab-vars" style="display:none">
+      <div class="form-row" style="margin-bottom:4px">
+        <span style="opacity:.7">Name &nbsp;|&nbsp; PLC tag &nbsp;|&nbsp; Data type &nbsp;|&nbsp; Elements</span>
+      </div>
+      <div class="form-row node-input-vars-container-row">
+        <ol id="node-config-input-vars-container"></ol>
+      </div>
+    </div>
+  </div>
+</script>
+
+<script type="text/html" data-help-name="micro800-config">
+  <p>Connection to a Rockwell Micro800 PLC (Micro820 / 830 / 850 / 870) over EtherNet/IP.</p>
+  <p>No slot or backplane path is used. The PLC is addressed directly on TCP port <code>44818</code>.</p>
+  <h3>Variables tab</h3>
+  <p>This is the one place where tags are entered. Define a friendly <b>name</b> for each PLC <b>tag</b>
+  (global variable, e.g. <code>Motor1_Speed</code>, <code>Arr[2]</code>, <code>Struct.Member</code>).
+  Read and write nodes then pick from this list.</p>
+  <ul>
+    <li><b>Data type</b>: leave on <i>auto</i> unless you need to force a type when writing.</li>
+    <li><b>Elements</b>: number of array elements to read starting at the tag (1 = a single value).</li>
+  </ul>
+</script>

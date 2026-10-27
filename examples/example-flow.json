@@ -1,0 +1,105 @@
+[
+  {
+    "id": "m800cfg0001",
+    "type": "micro800-config",
+    "name": "My Micro850",
+    "host": "192.168.1.10",
+    "port": 44818,
+    "timeout": 5000,
+    "reconnect": 5000,
+    "vars": [
+      { "name": "speed", "tag": "Motor1_Speed", "dataType": "auto", "count": 1 },
+      { "name": "running", "tag": "Motor1_Run", "dataType": "auto", "count": 1 },
+      { "name": "setpoint", "tag": "Setpoint", "dataType": "auto", "count": 1 }
+    ]
+  },
+  {
+    "id": "m800tab0001",
+    "type": "tab",
+    "label": "Micro800 example",
+    "disabled": false,
+    "info": "Edit the PLC config node (IP address and variable list) to match your Micro800 before deploying."
+  },
+  {
+    "id": "m800inj0001",
+    "type": "inject",
+    "z": "m800tab0001",
+    "name": "read speed",
+    "props": [{ "p": "payload" }],
+    "repeat": "",
+    "once": false,
+    "payload": "",
+    "payloadType": "date",
+    "x": 130,
+    "y": 80,
+    "wires": [["m800rd00001"]]
+  },
+  {
+    "id": "m800rd00001",
+    "type": "micro800-read",
+    "z": "m800tab0001",
+    "name": "",
+    "plc": "m800cfg0001",
+    "mode": "single",
+    "varName": "speed",
+    "interval": 0,
+    "onchange": false,
+    "x": 320,
+    "y": 80,
+    "wires": [["m800dbg0001"]]
+  },
+  {
+    "id": "m800rd00002",
+    "type": "micro800-read",
+    "z": "m800tab0001",
+    "name": "poll everything",
+    "plc": "m800cfg0001",
+    "mode": "all",
+    "varName": "",
+    "interval": 1000,
+    "onchange": true,
+    "x": 340,
+    "y": 140,
+    "wires": [["m800dbg0001"]]
+  },
+  {
+    "id": "m800inj0002",
+    "type": "inject",
+    "z": "m800tab0001",
+    "name": "setpoint = 50",
+    "props": [{ "p": "payload" }],
+    "repeat": "",
+    "once": false,
+    "payload": "50",
+    "payloadType": "num",
+    "x": 140,
+    "y": 220,
+    "wires": [["m800wr00001"]]
+  },
+  {
+    "id": "m800wr00001",
+    "type": "micro800-write",
+    "z": "m800tab0001",
+    "name": "",
+    "plc": "m800cfg0001",
+    "varName": "setpoint",
+    "x": 340,
+    "y": 220,
+    "wires": [["m800dbg0001"]]
+  },
+  {
+    "id": "m800dbg0001",
+    "type": "debug",
+    "z": "m800tab0001",
+    "name": "PLC output",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "true",
+    "targetType": "full",
+    "x": 570,
+    "y": 140,
+    "wires": []
+  }
+]

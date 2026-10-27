@@ -1,0 +1,65 @@
+<script type="text/javascript">
+  RED.nodes.registerType('micro800-write', {
+    category: 'Micro800',
+    color: '#f0a868',
+    defaults: {
+      name: { value: '' },
+      plc: { type: 'micro800-config', required: true },
+      varName: { value: '', required: true }
+    },
+    inputs: 1,
+    outputs: 1,
+    icon: 'bridge.svg',
+    align: 'right',
+    label: function () {
+      return this.name || (this.varName ? 'write ' + this.varName : 'micro800 write');
+    },
+    labelStyle: function () { return this.name ? 'node_label_italic' : ''; },
+    oneditprepare: function () {
+      var node = this;
+      function fillVars() {
+        var cfg = RED.nodes.node($('#node-input-plc').val());
+        var sel = $('#node-input-varName').empty();
+        var vars = (cfg && cfg.vars) || [];
+        vars.forEach(function (v) {
+          sel.append($('<option/>').val(v.name).text(v.name + '   (' + v.tag + ')'));
+        });
+        if (!vars.length) sel.append($('<option/>').val('').text('- no variables defined on PLC config -'));
+        if (node.varName) sel.val(node.varName);
+      }
+      $('#node-input-plc').on('change', fillVars);
+      fillVars();
+    },
+    oneditsave: function () {
+      this.varName = $('#node-input-varName').val() || '';
+    }
+  });
+</script>
+
+<script type="text/html" data-template-name="micro800-write">
+  <div class="form-row">
+    <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+    <input type="text" id="node-input-name" placeholder="Name">
+  </div>
+  <div class="form-row">
+    <label for="node-input-plc"><i class="fa fa-microchip"></i> PLC</label>
+    <input type="text" id="node-input-plc">
+  </div>
+  <div class="form-row">
+    <label for="node-input-varName"><i class="fa fa-list"></i> Variable</label>
+    <select id="node-input-varName" style="width:70%"></select>
+  </div>
+  <div class="form-tips">Tags and data types are defined on the PLC config node's <b>Variables</b> tab.</div>
+</script>
+
+<script type="text/html" data-help-name="micro800-write">
+  <p>Writes <code>msg.payload</code> to a variable defined on the PLC config node's <b>Variables</b> tab.
+  The tag and data type come from that list entry (<i>auto</i> reads the tag once to learn its type, then caches it).</p>
+  <dl class="message-properties">
+    <dt>payload <span class="property-type">any | array</span></dt>
+    <dd>Value to write. An array writes consecutive array elements starting at the tag.</dd>
+    <dt class="optional">variable <span class="property-type">string</span></dt>
+    <dd>Name of a variable to write instead of the configured selection.</dd>
+  </dl>
+  <p>The variable needs <i>External access</i> = Read/Write in CCW.</p>
+</script>
